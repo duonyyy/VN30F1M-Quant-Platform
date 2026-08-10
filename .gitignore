@@ -1,0 +1,46 @@
+# Python cache and tooling
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments and local configuration
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+
+# Build and package output
+build/
+dist/
+*.egg-info/
+
+# Generated logs and local runtime files
+*.log
+logs/
+
+# Generated lakehouse data and model artifacts
+lakehouse/landing/*
+lakehouse/bronze/*
+lakehouse/silver/*
+lakehouse/gold/*
+lakehouse/reports/*
+artifacts/
+models/
+*.parquet
+*.pkl
+*.joblib
+
+# Local IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
