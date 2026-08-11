@@ -70,3 +70,21 @@ GitHub Actions workflow:
 ```
 
 CI hiện kiểm tra docs bắt buộc, cú pháp Python và tự chạy `pytest` khi thư mục `vn30f1m_platform/tests` được thêm vào.
+
+## Core CLI
+
+Cài package ở chế độ editable:
+
+```powershell
+python -m pip install -e . --no-deps
+```
+
+Kiểm tra cấu hình và filesystem:
+
+```powershell
+vn30f1m status
+python -m vn30f1m_core.cli status
+python -m vn30f1m_core.cli status --json
+```
+
+Copy `.env.example` thành `.env` khi cần override cấu hình local. Không commit `.env` thật.

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vn30f1m-platform"
+version = "0.1.0"
+description = "VN30F1M quantitative research and ingestion platform."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+vn30f1m = "vn30f1m_core.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "packages/vn30f1m_core"}
+
+[tool.setuptools.packages.find]
+where = ["packages/vn30f1m_core"]
+include = ["vn30f1m_core*"]

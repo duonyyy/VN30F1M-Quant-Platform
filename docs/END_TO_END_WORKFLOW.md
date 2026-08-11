@@ -20,6 +20,8 @@ Resample OHLCV dùng `first/max/min/last/sum` cho `open/high/low/close/volume`, 
 
 ## 2. Lệnh mục tiêu
 
+Sau khi cài package editable bằng `python -m pip install -e . --no-deps`:
+
 ```powershell
 vn30f1m status
 vn30f1m kafka up

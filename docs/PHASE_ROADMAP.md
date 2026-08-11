@@ -54,11 +54,11 @@ Mục tiêu: có config/path/CLI nền.
 
 Tasks:
 
-- [ ] Tạo `vn30f1m_core/paths.py`.
-- [ ] Tạo `vn30f1m_core/settings.py`.
-- [ ] Tạo `vn30f1m_core/cli.py`.
-- [ ] Thêm command `status`.
-- [ ] Thêm `.env.example`.
+- [x] Tạo `vn30f1m_core/paths.py`.
+- [x] Tạo `vn30f1m_core/settings.py`.
+- [x] Tạo `vn30f1m_core/cli.py`.
+- [x] Thêm command `status`.
+- [x] Thêm `.env.example`.
 
 Output:
 
@@ -66,7 +66,10 @@ Output:
 
 Acceptance:
 
-- `python -m vn30f1m_core.cli status` chạy được.
+- `python -m vn30f1m_core.cli status` chạy được sau khi cài package editable.
+- `vn30f1m status` chạy được qua console script.
+- Settings đọc được biến môi trường và `.env`, với biến môi trường có precedence cao hơn.
+- `status` không tự tạo thư mục runtime hoặc thay đổi dữ liệu.
 
 ## Phase 03 - Migrate historical loader
 
