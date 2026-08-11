@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Mapping
 
@@ -63,6 +63,15 @@ class Settings:
     kafka_consumer_group: str
     clickhouse_enabled: bool
     clickhouse_url: str
+    dnse_api_key: str = field(default="", repr=False)
+    dnse_api_secret: str = field(default="", repr=False)
+    dnse_api_token: str = field(default="", repr=False)
+    dnse_openapi_url: str = "https://openapi.dnse.com.vn"
+    dnse_public_url: str = "https://api.dnse.com.vn"
+    dnse_api_version: str = "2026-05-07"
+    dnse_timeout_seconds: float = 30.0
+    dnse_max_retries: int = 3
+    dnse_backoff_factor: float = 0.5
 
     def __post_init__(self) -> None:
         if self.source_timeframe not in ALLOWED_TIMEFRAMES:
@@ -75,6 +84,12 @@ class Settings:
             raise ValueError("storage_backend must be 'local' or 'minio'")
         if self.kafka_enabled and not self.kafka_bootstrap_servers.strip():
             raise ValueError("kafka_bootstrap_servers is required when Kafka is enabled")
+        if self.dnse_timeout_seconds <= 0:
+            raise ValueError("dnse_timeout_seconds must be greater than zero")
+        if self.dnse_max_retries < 0:
+            raise ValueError("dnse_max_retries must not be negative")
+        if self.dnse_backoff_factor < 0:
+            raise ValueError("dnse_backoff_factor must not be negative")
 
     @classmethod
     def from_env(cls, project_root: str | os.PathLike[str] | None = None) -> "Settings":
@@ -93,12 +108,23 @@ class Settings:
             kafka_bootstrap_servers=_value(
                 "VN30F1M_KAFKA_BOOTSTRAP_SERVERS", file_values, "localhost:9092"
             ),
-            kafka_raw_topic=_value("VN30F1M_KAFKA_RAW_TOPIC", file_values, "vn30f1m.raw.ohlcv"),
+            kafka_raw_topic=_value("VN30F1M_KAFKA_RAW_TOPIC", file_values, "vn30f1m.ohlcv.raw"),
             kafka_consumer_group=_value(
                 "VN30F1M_KAFKA_CONSUMER_GROUP", file_values, "vn30f1m-batch-consumer"
             ),
             clickhouse_enabled=_bool_value("VN30F1M_CLICKHOUSE_ENABLED", file_values, False),
             clickhouse_url=_value("VN30F1M_CLICKHOUSE_URL", file_values, "http://localhost:8123"),
+            dnse_api_key=_value("DNSE_API_KEY", file_values, ""),
+            dnse_api_secret=_value("DNSE_API_SECRET", file_values, ""),
+            dnse_api_token=_value("DNSE_API_TOKEN", file_values, ""),
+            dnse_openapi_url=_value(
+                "DNSE_OPENAPI_URL", file_values, "https://openapi.dnse.com.vn"
+            ),
+            dnse_public_url=_value("DNSE_PUBLIC_URL", file_values, "https://api.dnse.com.vn"),
+            dnse_api_version=_value("DNSE_API_VERSION", file_values, "2026-05-07"),
+            dnse_timeout_seconds=float(_value("DNSE_TIMEOUT_SECONDS", file_values, "30")),
+            dnse_max_retries=int(_value("DNSE_MAX_RETRIES", file_values, "3")),
+            dnse_backoff_factor=float(_value("DNSE_BACKOFF_FACTOR", file_values, "0.5")),
         )
 
     @property
@@ -108,5 +134,10 @@ class Settings:
     def as_dict(self) -> dict[str, object]:
         values = asdict(self)
         values["project_root"] = str(self.project_root)
+        values["dnse_api_key_configured"] = bool(self.dnse_api_key)
+        values["dnse_api_secret_configured"] = bool(self.dnse_api_secret)
+        values["dnse_api_token_configured"] = bool(self.dnse_api_token)
+        for secret_name in ("dnse_api_key", "dnse_api_secret", "dnse_api_token"):
+            values.pop(secret_name, None)
         values["paths"] = {name: str(path) for name, path in self.paths.managed_paths().items()}
         return values

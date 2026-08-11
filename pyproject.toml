@@ -8,14 +8,21 @@ version = "0.1.0"
 description = "VN30F1M quantitative research and ingestion platform."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "numpy>=1.24,<3.0",
+    "pandas>=2.2,<3.0",
+    "pyarrow>=14.0",
+    "requests>=2.32,<3.0",
+]
+
+[project.optional-dependencies]
+bigdata = [
+    "pyspark>=3.5,<4.0",
+]
 
 [project.scripts]
 vn30f1m = "vn30f1m_core.cli:main"
 
 [tool.setuptools]
-package-dir = {"" = "packages/vn30f1m_core"}
-
-[tool.setuptools.packages.find]
-where = ["packages/vn30f1m_core"]
-include = ["vn30f1m_core*"]
+package-dir = {"vn30f1m_core" = "packages/vn30f1m_core/vn30f1m_core", "vn30f1m_dataset" = "packages/vn30f1m_dataset/vn30f1m_dataset"}
+packages = ["vn30f1m_core", "vn30f1m_dataset"]

@@ -18,7 +18,7 @@ def test_default_settings_match_phase_01():
     assert settings.canonical_timeframe == "15m"
     assert settings.timezone == "Asia/Ho_Chi_Minh"
     assert settings.kafka_enabled is True
-    assert settings.kafka_raw_topic == "vn30f1m.raw.ohlcv"
+    assert settings.kafka_raw_topic == "vn30f1m.ohlcv.raw"
 
 
 def test_dotenv_values_are_loaded(monkeypatch):

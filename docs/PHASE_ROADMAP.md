@@ -77,11 +77,11 @@ Mục tiêu: đọc được dữ liệu lịch sử từ `Trading_system/data/v
 
 Tasks:
 
-- [ ] Tạo `vn30f1m_dataset/loaders.py`.
-- [ ] Migrate logic CSV loader từ `Trading_system/src/data/data_loader.py`.
-- [ ] Chuẩn hóa schema `ohlcv_intraday`.
-- [ ] Hỗ trợ resample timeframe.
-- [ ] Ghi output Parquet vào lakehouse landing.
+- [x] Tạo `vn30f1m_dataset/loaders.py`.
+- [x] Migrate logic CSV loader từ `Trading_system/src/data/data_loader.py`.
+- [x] Chuẩn hóa schema `ohlcv_intraday`.
+- [x] Hỗ trợ resample timeframe.
+- [x] Ghi output Parquet vào lakehouse landing.
 
 Output:
 
@@ -90,6 +90,10 @@ Output:
 Acceptance:
 
 - Load và resample dữ liệu mẫu thành công.
+- CSV legacy được diễn giải theo `Asia/Ho_Chi_Minh` và lưu `event_time` theo UTC.
+- Dữ liệu nguồn giữ ở `1m`; output canonical được sinh ở `15m`.
+- Output Parquet nằm tại `lakehouse/landing/vn30f1m/ohlcv_intraday` và partition theo symbol/timeframe/trading_date.
+- Duplicate business key, OHLC bất hợp lệ và số âm bị từ chối.
 
 ## Phase 04 - Migrate DNSE client
 
@@ -97,11 +101,11 @@ Mục tiêu: có client lấy dữ liệu VN30F1M từ DNSE.
 
 Tasks:
 
-- [ ] Tạo `vn30f1m_dataset/sources/dnse_client.py`.
-- [ ] Tham khảo `Trading_system/src/data/dnse_client.py`.
-- [ ] Kiểm tra lại endpoint theo docs chính thức DNSE.
-- [ ] Thêm retry/timeout/logging.
-- [ ] Không hardcode token.
+- [x] Tạo `vn30f1m_dataset/sources/dnse_client.py`.
+- [x] Tham khảo `Trading_system/src/data/dnse_client.py`.
+- [x] Đối chiếu phạm vi market-data/auth với docs chính thức DNSE; endpoint và version vẫn cấu hình được.
+- [x] Thêm retry/timeout/logging.
+- [x] Không hardcode token.
 
 Output:
 
@@ -109,7 +113,7 @@ Output:
 
 Acceptance:
 
-- Có thể mock hoặc gọi thử endpoint mẫu.
+- Có thể mock endpoint và chạy thử bằng credential/env nếu DNSE account được cấp.
 
 ## Phase 05 - Kafka ingestion MVP
 
@@ -190,7 +194,8 @@ Tasks:
 - [ ] Dùng forward return: `Close.shift(-horizon) / Close - 1`.
 - [ ] Tạo label Long/Short với vùng nhiễu bị loại.
 - [ ] Tạo split train/validation/test theo thời gian.
-- [ ] Tạo feature selection bằng mutual information trên train.
+- [ ] Tạo feature selection native Spark (`ChiSqSelector`) trên train.
+- [ ] Dựng Spark MLlib Pipeline với `VectorAssembler` và estimator Spark native.
 - [ ] Tạo baseline `logistic_h4` timeframe `15m`.
 - [ ] Chọn signal policy trên validation, không dùng test.
 
@@ -296,8 +301,8 @@ Tasks:
 - [ ] Lưu model artifact local/MinIO.
 - [ ] Sinh ML signal.
 - [ ] Sinh ML report.
-- [ ] So sánh Logistic Regression, Random Forest, Extra Trees, Gradient Boosting.
-- [ ] Re-benchmark XGBoost sau khi xác nhận label đúng forward return.
+- [ ] So sánh Spark MLlib Logistic Regression, Random Forest và GBTClassifier.
+- [ ] Re-benchmark ExtraTrees/XGBoost chỉ khi cần đối chiếu ngoài Spark MLlib.
 
 Output:
 
