@@ -19,10 +19,13 @@ dependencies = [
 bigdata = [
     "pyspark>=3.5,<4.0",
 ]
+streaming = [
+    "kafka-python>=2.0,<3.0",
+]
 
 [project.scripts]
 vn30f1m = "vn30f1m_core.cli:main"
 
 [tool.setuptools]
-package-dir = {"vn30f1m_core" = "packages/vn30f1m_core/vn30f1m_core", "vn30f1m_dataset" = "packages/vn30f1m_dataset/vn30f1m_dataset"}
-packages = ["vn30f1m_core", "vn30f1m_dataset"]
+package-dir = {"vn30f1m_core" = "packages/vn30f1m_core/vn30f1m_core", "vn30f1m_dataset" = "packages/vn30f1m_dataset/vn30f1m_dataset", "vn30f1m_streaming" = "packages/vn30f1m_streaming/vn30f1m_streaming"}
+packages = ["vn30f1m_core", "vn30f1m_dataset", "vn30f1m_streaming"]

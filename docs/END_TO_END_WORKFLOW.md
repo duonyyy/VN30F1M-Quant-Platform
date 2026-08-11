@@ -20,18 +20,28 @@ Resample OHLCV dùng `first/max/min/last/sum` cho `open/high/low/close/volume`, 
 
 ## 2. Lệnh mục tiêu
 
-Sau khi cài package editable bằng `python -m pip install -e . --no-deps`:
+Sau khi cài package editable và streaming extra:
 
 ```powershell
+python -m pip install -e ".[streaming]"
+docker compose -f infra/docker-compose.yml up -d
 vn30f1m status
-vn30f1m kafka up
 vn30f1m dataset load-historical
-vn30f1m dataset publish-kafka
-vn30f1m dataset consume-kafka
+vn30f1m stream publish-csv --input "..\Trading_system\data\vn30f1m-future_2.csv" --limit 100
+vn30f1m stream consume-once --max-records 100
 vn30f1m spark build
 vn30f1m analysis run-baseline
 vn30f1m dashboard
 vn30f1m pipeline batch
+```
+
+Loader historical mặc định đọc `../Trading_system/data/vn30f1m-future_2.csv`. Có thể chỉ định nguồn và timeframe:
+
+```powershell
+vn30f1m dataset load-historical `
+  --input "C:\path\to\vn30f1m-future_2.csv" `
+  --timeframe 15m `
+  --json
 ```
 
 ## 3. Input MVP

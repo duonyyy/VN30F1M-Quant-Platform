@@ -35,6 +35,37 @@ def build_parser() -> argparse.ArgumentParser:
         "--timeframe", choices=("1m", "5m", "15m", "30m"), help="target output timeframe"
     )
     load_historical.add_argument("--json", action="store_true", help="print machine-readable JSON")
+
+    stream = subparsers.add_parser("stream", help="Kafka streaming commands")
+    stream_subparsers = stream.add_subparsers(dest="stream_command", required=True)
+    publish_csv = stream_subparsers.add_parser(
+        "publish-csv", help="publish canonical historical CSV rows to Kafka"
+    )
+    publish_csv.add_argument("--root", type=Path, help="override the platform repository root")
+    publish_csv.add_argument("--input", type=Path, required=True, help="historical CSV path")
+    publish_csv.add_argument("--symbol", help="instrument symbol; defaults to settings")
+    publish_csv.add_argument("--source-timezone", help="timezone for naive CSV timestamps")
+    publish_csv.add_argument("--limit", type=int, help="publish only the first N rows")
+    publish_csv.add_argument("--json", action="store_true", help="print machine-readable JSON")
+
+    publish_dnse = stream_subparsers.add_parser(
+        "publish-dnse", help="fetch DNSE OHLCV and publish it to Kafka"
+    )
+    publish_dnse.add_argument("--root", type=Path, help="override the platform repository root")
+    publish_dnse.add_argument("--symbol", help="instrument symbol; defaults to settings")
+    publish_dnse.add_argument("--from-timestamp", type=int)
+    publish_dnse.add_argument("--to-timestamp", type=int)
+    publish_dnse.add_argument("--resolution", default="1", help="DNSE resolution: 1, 5, 15 or 30")
+    publish_dnse.add_argument("--json", action="store_true", help="print machine-readable JSON")
+
+    consume_once = stream_subparsers.add_parser(
+        "consume-once", help="consume a bounded batch into local bronze and DLQ"
+    )
+    consume_once.add_argument("--root", type=Path, help="override the platform repository root")
+    consume_once.add_argument("--output", type=Path, help="bronze output root")
+    consume_once.add_argument("--timeout-ms", type=int, default=1000)
+    consume_once.add_argument("--max-records", type=int, default=100)
+    consume_once.add_argument("--json", action="store_true", help="print machine-readable JSON")
     return parser
 
 
@@ -115,6 +146,70 @@ def _run_load_historical(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_publish_csv(args: argparse.Namespace) -> int:
+    from vn30f1m_streaming import KafkaOHLCVProducer
+
+    settings = Settings.from_env(args.root)
+    with KafkaOHLCVProducer.from_settings(settings) as producer:
+        count = producer.send_csv(
+            args.input,
+            symbol=args.symbol or settings.default_symbol,
+            source_timezone=args.source_timezone or settings.timezone,
+            limit=args.limit,
+        )
+    summary = {"source": "historical_csv", "published": count, "topic": settings.kafka_raw_topic}
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        print(f"published: {count}")
+        print(f"topic: {settings.kafka_raw_topic}")
+    return 0
+
+
+def _run_publish_dnse(args: argparse.Namespace) -> int:
+    from vn30f1m_dataset import DNSEClient, DNSEClientConfig
+    from vn30f1m_streaming import KafkaOHLCVProducer
+
+    settings = Settings.from_env(args.root)
+    with DNSEClient(DNSEClientConfig.from_settings(settings)) as client:
+        frame = client.get_ohlcv_futures(
+            symbol=args.symbol or settings.default_symbol,
+            from_timestamp=args.from_timestamp,
+            to_timestamp=args.to_timestamp,
+            resolution=args.resolution,
+        )
+    with KafkaOHLCVProducer.from_settings(settings) as producer:
+        count = producer.send_dataframe(frame, source="dnse_api")
+    summary = {"source": "dnse_api", "fetched": len(frame), "published": count, "topic": settings.kafka_raw_topic}
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        print(f"fetched: {len(frame)}")
+        print(f"published: {count}")
+        print(f"topic: {settings.kafka_raw_topic}")
+    return 0
+
+
+def _run_consume_once(args: argparse.Namespace) -> int:
+    from vn30f1m_streaming import KafkaOHLCVConsumer
+
+    settings = Settings.from_env(args.root)
+    kwargs = {}
+    if args.output:
+        kwargs["bronze_root"] = args.output.expanduser().resolve()
+    with KafkaOHLCVConsumer.from_settings(settings, **kwargs) as consumer:
+        summary = consumer.run_once(
+            timeout_ms=args.timeout_ms,
+            max_records=args.max_records,
+        )
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        for name, count in summary.items():
+            print(f"{name}: {count}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -125,7 +220,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if args.command == "dataset" and args.dataset_command == "load-historical":
             return _run_load_historical(args)
-    except (OSError, ValueError) as exc:
+        if args.command == "stream" and args.stream_command == "publish-csv":
+            return _run_publish_csv(args)
+        if args.command == "stream" and args.stream_command == "publish-dnse":
+            return _run_publish_dnse(args)
+        if args.command == "stream" and args.stream_command == "consume-once":
+            return _run_consume_once(args)
+    except (OSError, RuntimeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     parser.error(f"unsupported command: {args.command}")

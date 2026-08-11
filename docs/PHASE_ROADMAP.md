@@ -121,12 +121,12 @@ Mục tiêu: đưa Kafka vào đường ingest bắt buộc của MVP.
 
 Tasks:
 
-- [ ] Tạo Docker Compose service cho Kafka.
-- [ ] Chốt topic `vn30f1m.ohlcv.raw`.
-- [ ] Viết producer publish CSV/DNSE OHLCV vào Kafka.
-- [ ] Viết consumer ghi Kafka events vào landing/bronze.
-- [ ] Thêm message key `symbol + event_time + timeframe`.
-- [ ] Thêm dead-letter topic cho record lỗi.
+- [x] Tạo Docker Compose service cho Kafka.
+- [x] Chốt topic `vn30f1m.ohlcv.raw`.
+- [x] Viết producer publish CSV/DNSE OHLCV vào Kafka.
+- [x] Viết consumer ghi Kafka events vào landing/bronze.
+- [x] Thêm message key `symbol + event_time + timeframe`.
+- [x] Thêm dead-letter topic cho record lỗi.
 
 Output:
 
@@ -135,7 +135,7 @@ Output:
 
 Acceptance:
 
-- Publish/consume được dữ liệu mẫu.
+- Publish/consume được dữ liệu mẫu bằng CLI hoặc mock test.
 - Duplicate event xử lý theo business key.
 
 ## Phase 05B - Batch pipeline bằng Spark

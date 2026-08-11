@@ -85,6 +85,9 @@ Kiểm tra cấu hình và filesystem:
 vn30f1m status
 python -m vn30f1m_core.cli status
 python -m vn30f1m_core.cli status --json
+vn30f1m dataset load-historical
 ```
 
 Copy `.env.example` thành `.env` khi cần override cấu hình local. Không commit `.env` thật.
+
+Historical loader mặc định đọc `../Trading_system/data/vn30f1m-future_2.csv`, giữ dữ liệu nguồn `1m` và ghi cả source/canonical `15m` vào `lakehouse/landing/vn30f1m/ohlcv_intraday`.

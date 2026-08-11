@@ -55,6 +55,7 @@ DNSE / historical CSV
 
 - Dùng Kafka trong MVP để thay vai trò Pub/Sub và lưu event log ingestion.
 - Dùng Spark batch cho ML/backtest MVP sau khi dữ liệu đã vào lakehouse.
+- Train model bằng Apache Spark MLlib (`pyspark.ml`); scikit-learn chỉ là benchmark phụ nếu cần.
 - Dùng open-source stack: Apache Kafka, Spark, ClickHouse, MinIO/Parquet.
 - Chỉ migrate code cũ khi đã rõ owner và output.
 - Không để dashboard phụ thuộc BigQuery/GCS trong MVP.

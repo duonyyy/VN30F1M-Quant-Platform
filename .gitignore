@@ -40,6 +40,7 @@ models/
 *.parquet
 *.pkl
 *.joblib
+lakehouse/bronze/**/_consumer_state/
 
 # Local IDE and OS files
 .idea/

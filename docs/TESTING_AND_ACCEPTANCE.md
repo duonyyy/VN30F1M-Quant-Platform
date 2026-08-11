@@ -12,6 +12,21 @@ Phase 01 được coi là hoàn tất khi:
 - Contract nêu rõ schema, nullability, allowed values, deduplication, provenance, resample và leakage rule.
 - Có thể rebuild serving/report từ lakehouse mà không cần GCP; Kafka dùng để replay/audit ingestion.
 
+Phase 03 bổ sung acceptance:
+
+- Loader đọc được CSV legacy `vn30f1m-future_2.csv`.
+- Timestamp naive được localize theo `Asia/Ho_Chi_Minh` rồi chuyển UTC.
+- Resample dùng `first/max/min/last/sum`, không forward-fill gap.
+- Parquet có `0` duplicate business key và đạt validation OHLCV.
+
+Phase 05 bổ sung acceptance:
+
+- Docker Compose định nghĩa Kafka KRaft local và tạo `vn30f1m.ohlcv.raw` cùng DLQ.
+- Producer publish được CSV/DNSE OHLCV với key `symbol|event_time|timeframe`.
+- Consumer validate, ghi bronze JSONL và chống duplicate bằng business key.
+- Record lỗi được route sang `vn30f1m.ohlcv.raw.dlq`.
+- Unit/mock suite hiện chạy được `17 passed`; integration Docker cần Docker daemon đang chạy.
+
 ## 1. Mục tiêu kiểm thử
 
 Kiểm thử phải chứng minh:

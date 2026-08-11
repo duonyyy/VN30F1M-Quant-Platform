@@ -65,6 +65,28 @@ Timeframe sau MVP:
 
 ## 4. Feature engineering
 
+## 4A. Training framework
+
+**Framework chính:** Apache Spark MLlib qua `pyspark.ml`.
+
+Lý do:
+
+- Đây là đồ án Big Data; cùng một Spark pipeline xử lý dữ liệu và train model.
+- Có thể chạy local bằng Spark mode, sau đó mở rộng sang standalone/cluster mà không đổi contract.
+- Tránh biến phần train thành một pipeline pandas/scikit-learn tách rời khỏi phần Big Data.
+
+Spark ML pipeline chuẩn sẽ dùng:
+
+```text
+Spark DataFrame
+  -> Imputer / feature preparation
+  -> VectorAssembler
+  -> StandardScaler (khi cần)
+  -> LogisticRegression / RandomForestClassifier / GBTClassifier
+```
+
+`scikit-learn` chỉ được phép dùng cho sanity check hoặc benchmark phụ trên sample nhỏ; không phải pipeline nghiệm thu chính. `ExtraTrees` không phải model native của Spark MLlib nên chỉ để optional comparison nếu giảng viên yêu cầu.
+
 Feature phải chỉ dùng dữ liệu đã biết tại thời điểm ra quyết định.
 
 Nhóm feature chính:
@@ -192,13 +214,15 @@ Không dùng random split.
 
 ## 8. Feature selection
 
-MVP dùng:
+MVP dùng Spark MLlib:
 
 ```text
-SimpleImputer(strategy="median")
-mutual_info_classif trên train set
+Imputer(strategy="median")
+ChiSqSelector(numTopFeatures=N) trên train set
 chọn top N feature
 ```
+
+`ChiSqSelector` là lựa chọn native của Spark MLlib cho feature selection. Nếu cần mutual information đúng theo báo cáo legacy, chỉ chạy như benchmark phụ trên sample train; không đưa scikit-learn vào pipeline chính.
 
 Top N gợi ý:
 
@@ -206,8 +230,7 @@ Top N gợi ý:
 |---|---:|
 | Logistic Regression | 36-42 |
 | Random Forest | 44 |
-| Extra Trees | 44 |
-| Gradient Boosting | 24 |
+| GBT/One-vs-Rest | 24 |
 
 Lưu ý: feature selection phải fit trên train set בלבד. Validation/test chỉ transform theo feature đã chọn.
 
@@ -215,18 +238,22 @@ Lưu ý: feature selection phải fit trên train set בלבד. Validation/test 
 
 MVP ưu tiên model đơn giản trước.
 
-### Candidate 1: Logistic Regression
+### Candidate 1: Spark MLlib Logistic Regression
 
 Model chính ban đầu:
 
 ```python
-LogisticRegression(
-    C=0.08,
-    class_weight="balanced",
-    max_iter=2000,
-    random_state=42,
+pyspark.ml.classification.LogisticRegression(
+    featuresCol="features",
+    labelCol="label",
+    regParam=0.08,
+    elasticNetParam=0.0,
+    maxIter=200,
+    standardization=True,
 )
 ```
+
+Nếu cần cân bằng lớp, tạo `weightCol` trong Spark DataFrame và truyền vào estimator; Spark không dùng tham số `class_weight` như scikit-learn.
 
 Lý do:
 
@@ -234,32 +261,33 @@ Lý do:
 - Dễ giải thích.
 - Theo kết quả cũ, `logistic_h4` có holdout tốt nhất.
 
-### Candidate 2: Random Forest
+### Candidate 2: Spark MLlib Random Forest
 
 ```python
-RandomForestClassifier(
-    n_estimators=500,
-    max_depth=5,
-    min_samples_leaf=80,
-    max_features="sqrt",
-    class_weight="balanced_subsample",
-    random_state=42,
+pyspark.ml.classification.RandomForestClassifier(
+    featuresCol="features",
+    labelCol="label",
+    numTrees=200,
+    maxDepth=5,
+    minInstancesPerNode=80,
+    featureSubsetStrategy="sqrt",
+    seed=42,
 )
 ```
 
 Mục đích: kiểm tra quan hệ phi tuyến.
 
-### Candidate 3: Extra Trees
+### Candidate 3: Spark MLlib Gradient-Boosted Trees
 
-Dùng để kiểm tra randomization mạnh hơn Random Forest.
+Dùng sau Logistic Regression và Random Forest để kiểm tra mô hình phi tuyến. `GBTClassifier` native chủ yếu dành cho binary classification; với `LONG/SHORT/HOLD` phải dùng `OneVsRest` hoặc giữ GBT ở mức optional.
 
-### Candidate 4: Gradient Boosting
+### Candidate 4: Optional ExtraTrees/XGBoost
 
-Dùng sau khi baseline ổn. Cần kiểm soát overfit chặt vì kết quả cũ cho thấy validation đẹp nhưng test yếu.
+Dùng sau khi baseline Spark MLlib ổn và chỉ khi cần so sánh thêm. Cần kiểm soát overfit chặt vì kết quả cũ cho thấy validation đẹp nhưng test yếu.
 
 ### Candidate để sau MVP
 
-- XGBoost.
+- XGBoost (`xgboost.spark` nếu cần giữ Spark DataFrame).
 - LightGBM.
 - LSTM.
 - Ensemble.
@@ -371,12 +399,12 @@ MVP fail khi:
 ML-01: Migrate feature builder từ create_ml_alpha.py
 ML-02: Migrate label builder forward return
 ML-03: Migrate time split
-ML-04: Migrate feature selection
+ML-04: Migrate Spark `ChiSqSelector` feature selection
 ML-05: Migrate Logistic Regression baseline
 ML-06: Migrate signal policy
 ML-07: Migrate backtest metrics
 ML-08: Generate ML report
-ML-09: Add Random Forest / Extra Trees / Gradient Boosting comparison
+ML-09: Add Spark Random Forest / GBT comparison; ExtraTrees optional
 ML-10: Optional XGBoost re-benchmark sau khi sửa label
 ```
 
