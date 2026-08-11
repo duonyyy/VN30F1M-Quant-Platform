@@ -27,6 +27,13 @@ Phase 05 bổ sung acceptance:
 - Record lỗi được route sang `vn30f1m.ohlcv.raw.dlq`.
 - Unit/mock suite hiện chạy được `17 passed`; integration Docker cần Docker daemon đang chạy.
 
+Phase 05B bổ sung acceptance:
+
+- Spark đọc Bronze JSONL theo schema cố định và giữ record lỗi trong Bronze.
+- Silver Parquet chỉ chứa record valid, deduplicate theo business key.
+- Có report Parquet/JSON với input, valid, rejected và duplicate counts.
+- CLI `vn30f1m batch run-spark` dùng được sau khi cài `.[bigdata]`.
+
 ## 1. Mục tiêu kiểm thử
 
 Kiểm thử phải chứng minh:

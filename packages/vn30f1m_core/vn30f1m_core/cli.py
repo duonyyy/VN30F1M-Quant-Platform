@@ -66,6 +66,20 @@ def build_parser() -> argparse.ArgumentParser:
     consume_once.add_argument("--timeout-ms", type=int, default=1000)
     consume_once.add_argument("--max-records", type=int, default=100)
     consume_once.add_argument("--json", action="store_true", help="print machine-readable JSON")
+
+    batch = subparsers.add_parser("batch", help="Spark batch processing commands")
+    batch_subparsers = batch.add_subparsers(dest="batch_command", required=True)
+    run_spark = batch_subparsers.add_parser(
+        "run-spark", help="process Kafka bronze JSONL into Spark bronze/silver Parquet"
+    )
+    run_spark.add_argument("--root", type=Path, help="override the platform repository root")
+    run_spark.add_argument("--input", type=Path, help="raw Kafka bronze JSONL root")
+    run_spark.add_argument("--bronze-output", type=Path, help="Spark bronze Parquet root")
+    run_spark.add_argument("--silver-output", type=Path, help="Spark silver Parquet root")
+    run_spark.add_argument("--report-output", type=Path, help="data-quality report root")
+    run_spark.add_argument("--master", default="local[*]", help="Spark master URL")
+    run_spark.add_argument("--run-id", help="stable run id; defaults to generated id")
+    run_spark.add_argument("--json", action="store_true", help="print machine-readable JSON")
     return parser
 
 
@@ -210,6 +224,34 @@ def _run_consume_once(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_spark_batch(args: argparse.Namespace) -> int:
+    from vn30f1m_batch import SparkBatchConfig, run_spark_batch_local
+
+    settings = Settings.from_env(args.root)
+    config = SparkBatchConfig.from_settings(
+        settings,
+        input_root=args.input,
+        bronze_output=args.bronze_output,
+        silver_output=args.silver_output,
+        report_output=args.report_output,
+        master=args.master,
+        run_id=args.run_id,
+    )
+    summary = run_spark_batch_local(config).as_dict()
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        print(f"run_id: {summary['run_id']}")
+        print(f"input rows: {summary['input_rows']}")
+        print(f"valid rows: {summary['valid_rows']}")
+        print(f"rejected rows: {summary['rejected_rows']}")
+        print(f"duplicate rows: {summary['duplicate_rows']}")
+        print(f"bronze: {summary['bronze_output']}")
+        print(f"silver: {summary['silver_output']}")
+        print(f"report: {summary['report_output']}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -226,6 +268,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _run_publish_dnse(args)
         if args.command == "stream" and args.stream_command == "consume-once":
             return _run_consume_once(args)
+        if args.command == "batch" and args.batch_command == "run-spark":
+            return _run_spark_batch(args)
     except (OSError, RuntimeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

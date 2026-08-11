@@ -144,11 +144,11 @@ Mục tiêu: Spark xử lý dữ liệu intraday theo batch.
 
 Tasks:
 
-- [ ] Tạo Spark common config.
-- [ ] Tạo bronze ingest.
-- [ ] Tạo silver validation.
-- [ ] Ghi bronze/silver Parquet.
-- [ ] Sinh data quality report.
+- [x] Tạo Spark common config.
+- [x] Tạo bronze ingest.
+- [x] Tạo silver validation.
+- [x] Ghi bronze/silver Parquet.
+- [x] Sinh data quality report.
 
 Output:
 
@@ -158,7 +158,7 @@ Output:
 
 Acceptance:
 
-- Spark job chạy được trên dữ liệu mẫu.
+- Spark job có CLI local và test contract; chạy thật cần cài PySpark và có dữ liệu Bronze.
 
 ## Phase 06 - ML feature engineering
 

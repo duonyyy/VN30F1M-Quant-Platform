@@ -29,7 +29,7 @@ vn30f1m status
 vn30f1m dataset load-historical
 vn30f1m stream publish-csv --input "..\Trading_system\data\vn30f1m-future_2.csv" --limit 100
 vn30f1m stream consume-once --max-records 100
-vn30f1m spark build
+vn30f1m batch run-spark --json
 vn30f1m analysis run-baseline
 vn30f1m dashboard
 vn30f1m pipeline batch
