@@ -383,7 +383,9 @@ VN30F1M không copy nguyên stack của Aurora:
 - Phase 05: Kafka Compose, raw topic, DLQ, producer và consumer đã có.
 - Phase 05B: Spark batch code đã có; runtime cần cài PySpark và chạy trên Bronze
   input.
-- Phase 06: feature engineering chưa triển khai.
+- Phase 06: leakage-safe technical feature builder và Gold output đã có; hiện
+  lõi chạy bằng pandas/Arrow trên Silver dataset, còn Spark-distributed feature
+  execution là bước tối ưu tiếp theo nếu dữ liệu vượt khả năng local.
 - Phase 07: Spark MLlib training chưa triển khai.
 - Realtime inference, API và dashboard là các phase sau.
 

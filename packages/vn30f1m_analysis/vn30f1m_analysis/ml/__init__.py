@@ -1,6 +1,6 @@
-"""VN30F1M feature, label, strategy and backtest package."""
+"""Machine-learning feature and label utilities."""
 
-from .ml.features import (
+from .features import (
     FEATURE_SET_VERSION,
     FeatureConfig,
     FeatureContractError,

@@ -34,6 +34,13 @@ Phase 05B bổ sung acceptance:
 - Có report Parquet/JSON với input, valid, rejected và duplicate counts.
 - CLI `vn30f1m batch run-spark` dùng được sau khi cài `.[bigdata]`.
 
+Phase 06 bổ sung acceptance:
+
+- Gold feature builder chạy theo từng symbol và giữ thứ tự thời gian.
+- Feature vector tại `t` không thay đổi khi chỉ thay đổi OHLCV của chính bar `t`.
+- Feature có version, `available_at` UTC và trạng thái `warmup`/`ready`.
+- Gold feature không chứa `label` hoặc forward return.
+
 ## 1. Mục tiêu kiểm thử
 
 Kiểm thử phải chứng minh:

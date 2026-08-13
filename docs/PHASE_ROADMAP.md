@@ -166,14 +166,14 @@ Mục tiêu: migrate feature kỹ thuật và feature ML từ `Trading_system/sc
 
 Tasks:
 
-- [ ] Tạo `vn30f1m_analysis/ml/features.py`.
-- [ ] Migrate return, momentum, volatility, range features.
-- [ ] Migrate ATR, RSI, Bollinger Bands, EMA, ADX.
-- [ ] Migrate linear regression + ATR z-score features.
-- [ ] Migrate volume/session features.
-- [ ] Shift toàn bộ predictors một bar để chống leakage.
-- [ ] Thêm test chống leakage.
-- [ ] Ghi gold features.
+- [x] Tạo `vn30f1m_analysis/ml/features.py`.
+- [x] Migrate return, momentum, volatility, range features.
+- [x] Migrate ATR, RSI, Bollinger Bands, EMA, ADX.
+- [x] Migrate linear regression + ATR z-score features.
+- [x] Migrate volume/session features.
+- [x] Shift toàn bộ predictors một bar để chống leakage.
+- [x] Thêm test chống leakage.
+- [x] Ghi gold features.
 
 Output:
 
@@ -183,6 +183,7 @@ Acceptance:
 
 - Feature tính theo thứ tự thời gian, không dùng future data.
 - Predictor tại `t` chỉ dùng dữ liệu biết đến `t-1`.
+- Có version `vn30f1m_features_v1` và phân biệt row `warmup`/`ready`.
 
 ## Phase 06B - ML label, split và candidate baseline
 

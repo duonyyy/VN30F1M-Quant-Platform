@@ -80,6 +80,18 @@ def build_parser() -> argparse.ArgumentParser:
     run_spark.add_argument("--master", default="local[*]", help="Spark master URL")
     run_spark.add_argument("--run-id", help="stable run id; defaults to generated id")
     run_spark.add_argument("--json", action="store_true", help="print machine-readable JSON")
+
+    analysis = subparsers.add_parser("analysis", help="feature and analysis commands")
+    analysis_subparsers = analysis.add_subparsers(dest="analysis_command", required=True)
+    build_features = analysis_subparsers.add_parser(
+        "build-features", help="build leakage-safe Gold features from Silver Parquet"
+    )
+    build_features.add_argument("--root", type=Path, help="override the platform repository root")
+    build_features.add_argument("--input", type=Path, help="Silver Parquet root")
+    build_features.add_argument("--output", type=Path, help="Gold feature Parquet root")
+    build_features.add_argument("--feature-set-version", default="vn30f1m_features_v1")
+    build_features.add_argument("--shift-bars", type=int, default=1)
+    build_features.add_argument("--json", action="store_true", help="print machine-readable JSON")
     return parser
 
 
@@ -252,6 +264,43 @@ def _run_spark_batch(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_build_features(args: argparse.Namespace) -> int:
+    from vn30f1m_analysis.ml.features import (
+        FeatureConfig,
+        build_features_from_parquet,
+        write_features_parquet,
+    )
+
+    settings = Settings.from_env(args.root)
+    input_root = args.input or settings.paths.silver / "vn30f1m" / "ohlcv_intraday"
+    output_root = args.output or settings.paths.gold / "vn30f1m" / "features"
+    config = FeatureConfig(
+        feature_set_version=args.feature_set_version,
+        timezone=settings.timezone,
+        shift_bars=args.shift_bars,
+    )
+    frame, feature_columns = build_features_from_parquet(input_root, config=config)
+    write_features_parquet(frame, output_root, feature_columns=feature_columns)
+    summary = {
+        "input": str(Path(input_root).expanduser().resolve()),
+        "output": str(Path(output_root).expanduser().resolve()),
+        "rows": len(frame),
+        "feature_count": len(feature_columns),
+        "feature_set_version": config.feature_set_version,
+        "ready_rows": int((frame["feature_status"] == "ready").sum()),
+        "warmup_rows": int((frame["feature_status"] == "warmup").sum()),
+    }
+    if args.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        print(f"rows: {summary['rows']}")
+        print(f"features: {summary['feature_count']}")
+        print(f"ready rows: {summary['ready_rows']}")
+        print(f"warmup rows: {summary['warmup_rows']}")
+        print(f"output: {summary['output']}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -270,6 +319,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _run_consume_once(args)
         if args.command == "batch" and args.batch_command == "run-spark":
             return _run_spark_batch(args)
+        if args.command == "analysis" and args.analysis_command == "build-features":
+            return _run_build_features(args)
     except (OSError, RuntimeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

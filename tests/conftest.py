@@ -9,7 +9,9 @@ CORE_SRC = REPO_ROOT / "packages" / "vn30f1m_core"
 DATASET_SRC = REPO_ROOT / "packages" / "vn30f1m_dataset"
 STREAMING_SRC = REPO_ROOT / "packages" / "vn30f1m_streaming"
 BATCH_SRC = REPO_ROOT / "packages" / "vn30f1m_batch"
+ANALYSIS_SRC = REPO_ROOT / "packages" / "vn30f1m_analysis"
 sys.path.insert(0, str(CORE_SRC))
 sys.path.insert(0, str(DATASET_SRC))
 sys.path.insert(0, str(STREAMING_SRC))
 sys.path.insert(0, str(BATCH_SRC))
+sys.path.insert(0, str(ANALYSIS_SRC))
